@@ -14,21 +14,29 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../constants/colors';
 
-export default function LoginScreen({ navigation }) {
-  const [farmId, setFarmId]     = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [showPass, setShowPass] = useState(false);
+export default function SignUpScreen({ navigation }) {
+  const [farmId, setFarmId]         = useState('');
+  const [email, setEmail]           = useState('');
+  const [password, setPassword]     = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading]       = useState(false);
+  const [showPass, setShowPass]     = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
 
-  const handleLogin = () => {
-    if (!farmId.trim() || !password.trim()) {
-      Alert.alert('Missing Fields', 'Please enter your Farm ID and password.');
+  const handleSignUp = () => {
+    if (!farmId.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
+      Alert.alert('Missing Fields', 'Please fill in all fields.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert('Password Mismatch', 'Passwords do not match.');
       return;
     }
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      // navigation.replace('MainTabs'); // uncomment when MainTabs is ready
+      Alert.alert('Success', 'Account created successfully!');
+      navigation.goBack();
     }, 1500);
   };
 
@@ -46,13 +54,14 @@ export default function LoginScreen({ navigation }) {
               <Text style={styles.logoIcon}>🐟</Text>
             </View>
             <Text style={styles.appName}>IsdaApp</Text>
+            <Text style={styles.appTagline}>IoT Water Quality Monitoring System</Text>
             
           </View>
 
           {/* Card */}
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Sign In</Text>
-            <Text style={styles.cardSub}>Enter your farm credentials to continue</Text>
+            <Text style={styles.cardTitle}>Sign Up</Text>
+            <Text style={styles.cardSub}>Create your farm account to get started</Text>
 
             {/* Farm ID */}
             <Text style={styles.label}>Farm ID / Username</Text>
@@ -62,6 +71,19 @@ export default function LoginScreen({ navigation }) {
               placeholderTextColor={COLORS.textMuted}
               value={farmId}
               onChangeText={setFarmId}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
+            {/* Email */}
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your email"
+              placeholderTextColor={COLORS.textMuted}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
             />
@@ -88,31 +110,46 @@ export default function LoginScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
-            {/* Sign In Button */}
+            {/* Confirm Password */}
+            <Text style={styles.label}>Confirm Password</Text>
+            <View style={styles.passRow}>
+              <TextInput
+                style={[styles.input, { flex: 1, marginBottom: 0 }]}
+                placeholder="Confirm your password"
+                placeholderTextColor={COLORS.textMuted}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirmPass}
+                autoCapitalize="none"
+              />
+              <TouchableOpacity
+                style={styles.showHideBtn}
+                onPress={() => setShowConfirmPass(!showConfirmPass)}
+              >
+                <Text style={styles.showHideTxt}>
+                  {showConfirmPass ? 'Hide' : 'Show'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Sign Up Button */}
             <TouchableOpacity
-              style={[styles.loginBtn, loading && { opacity: 0.7 }]}
-              onPress={handleLogin}
+              style={[styles.signUpBtn, loading && { opacity: 0.7 }]}
+              onPress={handleSignUp}
               disabled={loading}
               activeOpacity={0.85}
             >
               {loading
                 ? <ActivityIndicator color="#fff" />
-                : <Text style={styles.loginBtnTxt}>Sign In</Text>
+                : <Text style={styles.signUpBtnTxt}>Sign Up</Text>
               }
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.forgotBtn}>
-              <Text style={styles.forgotTxt}>Forgot password? </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.signUpBtn}
-              onPress={() => navigation.navigate('SignUp')}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.signUpBtnTxt}>Don't have an account? Sign Up</Text>
+            <TouchableOpacity style={styles.forgotBtn} onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.forgotTxt}>Already have an account? Sign In</Text>
             </TouchableOpacity>
           </View>
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -149,7 +186,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     padding: 28,
     flex: 1,
-    minHeight: 420,
+    minHeight: 500,
   },
   cardTitle: { fontSize: 22, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
   cardSub:   { fontSize: 13, color: COLORS.textSecondary, marginBottom: 24 },
@@ -176,7 +213,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   showHideBtn: {
     paddingHorizontal: 14,
@@ -205,20 +242,18 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   signUpBtn: {
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.primary,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
     marginBottom: 16,
   },
   signUpBtnTxt: {
-    color: COLORS.primary,
+    color: COLORS.white,
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
-  forgotBtn: { alignItems: 'center', marginBottom: 16 },
+  forgotBtn: { alignItems: 'center' },
   forgotTxt: { fontSize: 13, color: COLORS.primary },
 });

@@ -28,7 +28,7 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      // navigation.replace('MainTabs'); // uncomment when MainTabs is ready
+      navigation.replace('MainTabs');
     }, 1500);
   };
 

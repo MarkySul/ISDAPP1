@@ -3,8 +3,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { View, Text } from 'react-native';
+import { Text } from 'react-native';
+
 import { COLORS } from './constants/colors';
+
 import LoginScreen from './screens/LoginScreen';
 import SignUpScreen from './screens/SignUpScreen';
 import DashboardScreen from './screens/DashboardScreen';
@@ -12,6 +14,7 @@ import AlertsScreen from './screens/AlertsScreen';
 import AnalyticsScreen from './screens/AnalyticsScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import ChangePasswordScreen from './screens/ChangePasswordScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -36,10 +39,6 @@ function MainTabs() {
           fontWeight: '600',
           marginTop: 4,
         },
-        tabBarIconStyle: {
-          width: 24,
-          height: 24,
-        },
       }}
     >
       <Tab.Screen
@@ -47,7 +46,6 @@ function MainTabs() {
         component={DashboardScreen}
         options={{
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📊</Text>,
-          tabBarLabel: 'Dashboard',
         }}
       />
       <Tab.Screen
@@ -55,7 +53,6 @@ function MainTabs() {
         component={AlertsScreen}
         options={{
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🔔</Text>,
-          tabBarLabel: 'Alerts',
         }}
       />
       <Tab.Screen
@@ -63,7 +60,6 @@ function MainTabs() {
         component={AnalyticsScreen}
         options={{
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📈</Text>,
-          tabBarLabel: 'Analytics',
         }}
       />
       <Tab.Screen
@@ -71,7 +67,6 @@ function MainTabs() {
         component={SettingsScreen}
         options={{
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>⚙️</Text>,
-          tabBarLabel: 'Settings',
         }}
       />
     </Tab.Navigator>
@@ -82,12 +77,19 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+        <Stack.Navigator
+          initialRouteName="Login"
+          screenOptions={{ headerShown: false }}
+        >
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="SignUp" component={SignUpScreen} />
           <Stack.Screen name="MainTabs" component={MainTabs} />
-          {/* Profile sits outside MainTabs so it slides over the tab bar */}
+
+          {/* Profile */}
           <Stack.Screen name="Profile" component={ProfileScreen} />
+
+          {/* ✅ FIXED: MUST be inside Stack.Navigator */}
+          <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

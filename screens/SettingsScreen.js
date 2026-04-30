@@ -136,7 +136,7 @@ export default function SettingsScreen({ navigation }) {
             title="Farm Profile"
             subtitle="Manage farm information"
             right={<Arrow />}
-            onPress={() => Alert.alert('Coming Soon', 'Farm profile settings will be available soon.')}
+            onPress={() => navigation.navigate('Profile')}
           />
           <Divider />
           <Row
@@ -144,7 +144,7 @@ export default function SettingsScreen({ navigation }) {
             title="Change Password"
             subtitle="Update your login credentials"
             right={<Arrow />}
-            onPress={() => Alert.alert('Coming Soon', 'Password change feature will be available soon.')}
+            onPress={() => navigation.getParent()?.navigate('ChangePassword')}
             noBorder
           />
         </Card>

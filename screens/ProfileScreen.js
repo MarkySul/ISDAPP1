@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,22 +8,13 @@ import {
   StatusBar,
   TouchableOpacity,
   Switch,
+  Alert,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS } from '../constants/colors';
 
-// ── User data (replace with real auth/context later) ─────────────────────────
-const USER = {
-  name: 'Abe Reyes',
-  role: 'Farm Manager',
-  email: 'abe.reyes@farmshield.ph',
-  location: 'Cagayan de Oro, Philippines',
-  joined: 'January 2024',
-  devicesOnline: 4,
-  totalAlerts: 12,
-  cropMonitored: 'Rice · Cacao · Banana',
-};
+/* ───────── Components ───────── */
 
-// ── Reusable row components ───────────────────────────────────────────────────
 function SectionHeader({ title }) {
   return <Text style={styles.sectionHeader}>{title}</Text>;
 }
@@ -42,9 +33,11 @@ function InfoRow({ icon, label, value }) {
 
 function ActionRow({ icon, label, onPress, danger }) {
   return (
-    <TouchableOpacity style={styles.actionRow} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity style={styles.actionRow} onPress={onPress}>
       <Text style={styles.rowIcon}>{icon}</Text>
-      <Text style={[styles.actionLabel, danger && { color: '#E74C3C' }]}>{label}</Text>
+      <Text style={[styles.actionLabel, danger && { color: '#E74C3C' }]}>
+        {label}
+      </Text>
       <Text style={styles.chevron}>›</Text>
     </TouchableOpacity>
   );
@@ -58,17 +51,44 @@ function ToggleRow({ icon, label, value, onValueChange }) {
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ false: '#D1D5DB', true: COLORS.primary + '88' }}
-        thumbColor={value ? COLORS.primary : '#9CA3AF'}
+        trackColor={{ false: '#D1D5DB', true: (COLORS.primary || '#2e7d32') + '88' }}
+        thumbColor={value ? COLORS.primary || '#2e7d32' : '#9CA3AF'}
       />
     </View>
   );
 }
 
-// ── Main Screen ───────────────────────────────────────────────────────────────
+/* ───────── Main Screen ───────── */
+
 export default function ProfileScreen({ navigation }) {
+  const [user, setUser] = useState(null);
   const [notifications, setNotifications] = useState(true);
   const [liveSync, setLiveSync] = useState(true);
+
+  // Load user from storage
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const data = await AsyncStorage.getItem('USER_DATA');
+        if (data) {
+          setUser(JSON.parse(data));
+        }
+      } catch (e) {
+        console.log(e);
+      }
+    };
+
+    loadUser();
+  }, []);
+
+  // Loading state
+  if (!user) {
+    return (
+      <View style={{ flex:1, justifyContent:'center', alignItems:'center' }}>
+        <Text>Loading profile...</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -76,64 +96,45 @@ export default function ProfileScreen({ navigation }) {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => navigation.goBack()}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backIcon}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Profile</Text>
         <View style={{ width: 36 }} />
       </View>
 
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Avatar + Name */}
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+
+        {/* Avatar */}
         <View style={styles.avatarSection}>
-          <View style={styles.avatarRing}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarInitial}>
-                {USER.name.split(' ').map(n => n[0]).join('')}
-              </Text>
-            </View>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarInitial}>
+              {user.name?.split(' ').map(n => n[0]).join('')}
+            </Text>
           </View>
-          <Text style={styles.userName}>{USER.name}</Text>
-          <View style={styles.rolePill}>
-            <Text style={styles.roleText}>{USER.role}</Text>
-          </View>
-          <Text style={styles.userEmail}>{USER.email}</Text>
+
+          <Text style={styles.userName}>{user.name}</Text>
+          <Text style={styles.userEmail}>{user.email}</Text>
         </View>
 
-        {/* Stats Row */}
+        {/* Stats */}
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>{USER.devicesOnline}</Text>
-            <Text style={styles.statLabel}>Devices{'\n'}Online</Text>
+            <Text style={styles.statValue}>{user.devicesOnline || 0}</Text>
+            <Text style={styles.statLabel}>Devices</Text>
           </View>
-          <View style={styles.statDivider} />
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>{USER.totalAlerts}</Text>
-            <Text style={styles.statLabel}>Alerts{'\n'}This Month</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>3</Text>
-            <Text style={styles.statLabel}>Crops{'\n'}Monitored</Text>
+            <Text style={styles.statValue}>{user.totalAlerts || 0}</Text>
+            <Text style={styles.statLabel}>Alerts</Text>
           </View>
         </View>
 
-        {/* Account Info */}
+        {/* Info */}
         <SectionHeader title="ACCOUNT INFO" />
         <View style={styles.card}>
-          <InfoRow icon="📍" label="Location" value={USER.location} />
-          <View style={styles.divider} />
-          <InfoRow icon="🌾" label="Crops" value={USER.cropMonitored} />
-          <View style={styles.divider} />
-          <InfoRow icon="📅" label="Member Since" value={USER.joined} />
+          <InfoRow icon="📍" label="Location" value={user.location} />
+          <InfoRow icon="🌾" label="Crops" value={user.cropMonitored} />
+          <InfoRow icon="📅" label="Joined" value={user.joined} />
         </View>
 
         {/* Preferences */}
@@ -141,14 +142,13 @@ export default function ProfileScreen({ navigation }) {
         <View style={styles.card}>
           <ToggleRow
             icon="🔔"
-            label="Push Notifications"
+            label="Notifications"
             value={notifications}
             onValueChange={setNotifications}
           />
-          <View style={styles.divider} />
           <ToggleRow
             icon="🔄"
-            label="Live Data Sync"
+            label="Live Sync"
             value={liveSync}
             onValueChange={setLiveSync}
           />
@@ -157,187 +157,107 @@ export default function ProfileScreen({ navigation }) {
         {/* Settings */}
         <SectionHeader title="SETTINGS" />
         <View style={styles.card}>
-          <ActionRow
-            icon="✏️"
-            label="Edit Profile"
-            onPress={() => Alert.alert('Edit Profile', 'Coming soon!')}
-          />
-          <View style={styles.divider} />
-          <ActionRow
-            icon="🔒"
-            label="Change Password"
-            onPress={() => Alert.alert('Change Password', 'Coming soon!')}
-          />
-          <View style={styles.divider} />
-          <ActionRow
-            icon="📡"
-            label="Manage Devices"
-            onPress={() => Alert.alert('Manage Devices', 'Coming soon!')}
-          />
-          <View style={styles.divider} />
-          <ActionRow
-            icon="❓"
-            label="Help & Support"
-            onPress={() => Alert.alert('Help & Support', 'Coming soon!')}
-          />
+          <ActionRow icon="✏️" label="Edit Profile" onPress={() => Alert.alert('Coming soon')} />
+          <ActionRow icon="🔒" label="Change Password" onPress={() => Alert.alert('Coming soon')} />
+          <ActionRow icon="📡" label="Devices" onPress={() => Alert.alert('Coming soon')} />
+          <ActionRow icon="❓" label="Help" onPress={() => Alert.alert('Coming soon')} />
         </View>
 
-        {/* Version */}
-        <Text style={styles.version}>FarmShield AI · v1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
+/* ───────── Styles ───────── */
+
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#EEF2F7' },
 
-  // Header
   header: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary || '#2e7d32',
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    padding: 16,
   },
+
+  headerTitle: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+
   backBtn: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backIcon: { fontSize: 24, color: '#fff', lineHeight: 28, marginTop: -2 },
-  headerTitle: { fontSize: 16, fontWeight: '700', color: '#fff' },
 
-  container: { flex: 1 },
+  backIcon: { color: '#fff', fontSize: 22 },
+
   scrollContent: { paddingBottom: 40 },
 
-  // Avatar section
   avatarSection: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary || '#2e7d32',
     alignItems: 'center',
-    paddingBottom: 28,
-    paddingTop: 8,
+    padding: 20,
   },
-  avatarRing: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
+
   avatar: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     backgroundColor: '#1B5FA8',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarInitial: { fontSize: 26, fontWeight: '700', color: '#fff' },
-  userName: { fontSize: 20, fontWeight: '700', color: '#fff' },
-  rolePill: {
-    marginTop: 6,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 4,
-  },
-  roleText: { fontSize: 12, color: 'rgba(255,255,255,0.9)', fontWeight: '600' },
-  userEmail: { fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 6 },
 
-  // Stats
+  avatarInitial: { color: '#fff', fontSize: 22 },
+
+  userName: { color: '#fff', fontSize: 18, marginTop: 8 },
+
+  userEmail: { color: '#ddd', fontSize: 12 },
+
   statsRow: {
     flexDirection: 'row',
+    justifyContent: 'space-around',
     backgroundColor: '#fff',
-    marginHorizontal: 16,
-    marginTop: -16,
-    borderRadius: 16,
-    paddingVertical: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-    marginBottom: 8,
+    padding: 16,
   },
-  statCard: { flex: 1, alignItems: 'center' },
-  statValue: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
-  statLabel: {
-    fontSize: 10,
-    color: '#9CA3AF',
-    textAlign: 'center',
-    marginTop: 4,
-    lineHeight: 14,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  statDivider: { width: 1, backgroundColor: '#EEF2F7', marginVertical: 4 },
 
-  // Section headers
+  statCard: { alignItems: 'center' },
+
+  statValue: { fontSize: 20, color: COLORS.primary || '#2e7d32' },
+
+  statLabel: { fontSize: 12 },
+
   sectionHeader: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#9CA3AF',
-    letterSpacing: 1.2,
-    marginHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 8,
+    marginTop: 16,
+    marginLeft: 16,
+    fontSize: 12,
+    color: '#888',
   },
 
-  // Card
   card: {
     backgroundColor: '#fff',
-    borderRadius: 16,
-    marginHorizontal: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    overflow: 'hidden',
+    margin: 16,
+    borderRadius: 10,
+    padding: 10,
   },
-  divider: { height: 1, backgroundColor: '#F3F4F6', marginLeft: 52 },
 
-  // Info row
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  rowIcon: { fontSize: 18, width: 32, textAlign: 'center' },
-  rowBody: { marginLeft: 4, flex: 1 },
-  rowLabel: { fontSize: 11, color: '#9CA3AF', fontWeight: '600' },
-  rowValue: { fontSize: 13, color: '#1A2B45', fontWeight: '600', marginTop: 2 },
+  infoRow: { flexDirection: 'row', padding: 8 },
 
-  // Action row
+  rowIcon: { width: 30 },
+
+  rowBody: { flex: 1 },
+
+  rowLabel: { fontSize: 11 },
+
+  rowValue: { fontSize: 13 },
+
   actionRow: {
     flexDirection: 'row',
+    padding: 10,
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 15,
   },
-  actionLabel: { flex: 1, fontSize: 14, color: '#1A2B45', fontWeight: '500', marginLeft: 4 },
-  chevron: { fontSize: 20, color: '#D1D5DB', marginTop: -1 },
 
-  // Version
-  version: {
-    textAlign: 'center',
-    fontSize: 11,
-    color: '#B0BAC6',
-    marginTop: 24,
-    letterSpacing: 0.5,
-  },
+  actionLabel: { flex: 1 },
+
+  chevron: { fontSize: 18, color: '#ccc' },
 });

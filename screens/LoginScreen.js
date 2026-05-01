@@ -12,24 +12,54 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS } from '../constants/colors';
 
 export default function LoginScreen({ navigation }) {
-  const [farmId, setFarmId]     = useState('');
+  const [farmId, setFarmId] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading]   = useState(false);
+  const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!farmId.trim() || !password.trim()) {
       Alert.alert('Missing Fields', 'Please enter your Farm ID and password.');
       return;
     }
-    setLoading(true);
-    setTimeout(() => {
+
+    try {
+      setLoading(true);
+
+      const storedData = await AsyncStorage.getItem('USER_DATA');
+
+      if (!storedData) {
+        setLoading(false);
+        Alert.alert('Error', 'No account found on this device.');
+        return;
+      }
+
+      const user = JSON.parse(storedData);
+
+      console.log("--- LOGIN ATTEMPT ---");
+      console.log("Typed Username:", `"${farmId.trim()}"`);
+      console.log("Stored Username:", `"${user.username}"`);
+      console.log("Typed Password:", `"${password.trim()}"`);
+      console.log("Stored Password:", `"${user.password}"`);
+
+      const isUsernameValid = farmId.trim() === user.username;
+      const isPasswordValid = password.trim() === user.password;
+
+      if (isUsernameValid && isPasswordValid) {
+        setLoading(false);
+        navigation.replace('MainTabs');
+      } else {
+        setLoading(false);
+        Alert.alert('Invalid Login', 'Incorrect username or password.');
+      }
+    } catch (e) {
       setLoading(false);
-      navigation.replace('MainTabs');
-    }, 1500);
+      console.error(e);
+    }
   };
 
   return (
@@ -46,7 +76,6 @@ export default function LoginScreen({ navigation }) {
               <Text style={styles.logoIcon}>🐟</Text>
             </View>
             <Text style={styles.appName}>IsdaApp</Text>
-            
           </View>
 
           {/* Card */}
@@ -54,7 +83,7 @@ export default function LoginScreen({ navigation }) {
             <Text style={styles.cardTitle}>Sign In</Text>
             <Text style={styles.cardSub}>Enter your farm credentials to continue</Text>
 
-            {/* Farm ID */}
+            {/* Username */}
             <Text style={styles.label}>Farm ID / Username</Text>
             <TextInput
               style={styles.input}
@@ -63,7 +92,6 @@ export default function LoginScreen({ navigation }) {
               value={farmId}
               onChangeText={setFarmId}
               autoCapitalize="none"
-              autoCorrect={false}
             />
 
             {/* Password */}
@@ -76,7 +104,6 @@ export default function LoginScreen({ navigation }) {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPass}
-                autoCapitalize="none"
               />
               <TouchableOpacity
                 style={styles.showHideBtn}
@@ -88,12 +115,11 @@ export default function LoginScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
-            {/* Sign In Button */}
+            {/* Login Button */}
             <TouchableOpacity
               style={[styles.loginBtn, loading && { opacity: 0.7 }]}
               onPress={handleLogin}
               disabled={loading}
-              activeOpacity={0.85}
             >
               {loading
                 ? <ActivityIndicator color="#fff" />
@@ -102,16 +128,18 @@ export default function LoginScreen({ navigation }) {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.forgotBtn}>
-              <Text style={styles.forgotTxt}>Forgot password? </Text>
+              <Text style={styles.forgotTxt}>Forgot password?</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.signUpBtn}
               onPress={() => navigation.navigate('SignUp')}
-              activeOpacity={0.85}
             >
-              <Text style={styles.signUpBtnTxt}>Don't have an account? Sign Up</Text>
+              <Text style={styles.signUpBtnTxt}>
+                Don't have an account? Sign Up
+              </Text>
             </TouchableOpacity>
+
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -119,17 +147,20 @@ export default function LoginScreen({ navigation }) {
   );
 }
 
+/* ───────── Styles ───────── */
+
 const styles = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: COLORS.primary },
-  kav:    { flex: 1 },
-  scroll: { flexGrow: 1, backgroundColor: COLORS.primary },
+  safe: { flex: 1, backgroundColor: COLORS.primary },
+  kav: { flex: 1 },
+  scroll: { flexGrow: 1 },
+
   header: {
     alignItems: 'center',
     paddingTop: 48,
     paddingBottom: 32,
-    paddingHorizontal: 24,
     backgroundColor: COLORS.primary,
   },
+
   logoBox: {
     width: 72,
     height: 72,
@@ -139,86 +170,84 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 12,
   },
-  logoIcon:   { fontSize: 36 },
-  appName:    { fontSize: 28, fontWeight: '700', color: COLORS.white, letterSpacing: 1 },
-  appTagline: { fontSize: 13, color: COLORS.textInfo, marginTop: 4, textAlign: 'center' },
-  appSub:     { fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 4, textAlign: 'center' },
+
+  logoIcon: { fontSize: 36 },
+
+  appName: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: COLORS.white,
+  },
+
   card: {
     backgroundColor: COLORS.white,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: 28,
     flex: 1,
-    minHeight: 420,
   },
-  cardTitle: { fontSize: 22, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
-  cardSub:   { fontSize: 13, color: COLORS.textSecondary, marginBottom: 24 },
+
+  cardTitle: { fontSize: 22, fontWeight: '700' },
+  cardSub: { fontSize: 13, marginBottom: 20 },
+
   label: {
     fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.textSecondary,
     marginBottom: 6,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
+
   input: {
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: '#ccc',
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-    fontSize: 15,
-    color: COLORS.textPrimary,
-    backgroundColor: COLORS.background,
+    padding: 12,
     marginBottom: 16,
   },
+
   passRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 24,
+    marginBottom: 20,
   },
+
   showHideBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    backgroundColor: COLORS.primarySurface,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    marginLeft: 10,
   },
+
   showHideTxt: {
-    fontSize: 13,
-    fontWeight: '600',
     color: COLORS.primary,
   },
+
   loginBtn: {
     backgroundColor: COLORS.primary,
-    borderRadius: 14,
-    paddingVertical: 16,
+    padding: 14,
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
   },
+
   loginBtnTxt: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    color: '#fff',
+    fontWeight: 'bold',
   },
+
   signUpBtn: {
+    padding: 14,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.primary,
-    backgroundColor: COLORS.white,
-    borderRadius: 14,
-    paddingVertical: 16,
     alignItems: 'center',
-    marginBottom: 16,
   },
+
   signUpBtnTxt: {
     color: COLORS.primary,
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.5,
   },
-  forgotBtn: { alignItems: 'center', marginBottom: 16 },
-  forgotTxt: { fontSize: 13, color: COLORS.primary },
+
+  forgotBtn: {
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+
+  forgotTxt: {
+    color: COLORS.primary,
+  },
 });

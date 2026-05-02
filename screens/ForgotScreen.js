@@ -248,7 +248,7 @@ const ACCENT = '#4F6EF7';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#4F6EF7',
+    backgroundColor: '#F0F4FF',
   },
   scroll: {
     flexGrow: 1,
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: 'rgba(255,255,255,0.4)',
+    backgroundColor: '#CBD5E1',
   },
   stepDotActive: {
     backgroundColor: ACCENT,
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
   stepLine: {
     width: 48,
     height: 2,
-    backgroundColor: 'rgba(255,255,255,0.4)',
+    backgroundColor: '#CBD5E1',
     marginHorizontal: 6,
   },
   stepLineActive: {

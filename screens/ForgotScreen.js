@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -12,7 +13,8 @@ import {
   ScrollView,
 } from 'react-native';
 
-export default function ForgotScreen({ navigation }) {
+export default function ForgotScreen() {
+  const navigation = useNavigation();
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState(['', '', '', '']);
@@ -190,6 +192,13 @@ export default function ForgotScreen({ navigation }) {
           {/* ── Step 2 ── */}
           {step === 2 && (
             <>
+              <TouchableOpacity
+                style={styles.stepBackBtn}
+                onPress={() => setStep(1)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.stepBackText}>← Back</Text>
+              </TouchableOpacity>
               <View style={styles.otpRow}>
                 {otp.map((digit, i) => (
                   <TextInput
@@ -232,12 +241,10 @@ export default function ForgotScreen({ navigation }) {
         </Animated.View>
 
         {/* Footer */}
-        <View style={styles.footerRow}>
+        <TouchableOpacity style={styles.footerRow} onPress={() => navigation.navigate('Login')} activeOpacity={0.7}>
           <Text style={styles.footerText}>Remember your password? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-            <Text style={styles.footerLink}>Sign In</Text>
-          </TouchableOpacity>
-        </View>
+          <Text style={styles.footerLink}>Sign In</Text>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -248,7 +255,7 @@ const ACCENT = '#4F6EF7';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F0F4FF',
+    backgroundColor: '#4F6EF7',
   },
   scroll: {
     flexGrow: 1,
@@ -264,7 +271,7 @@ const styles = StyleSheet.create({
   },
   backArrow: {
     fontSize: 20,
-    color: ACCENT,
+    color: "#FFFFFF",
     marginRight: 6,
   },
   backText: {
@@ -282,10 +289,10 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#CBD5E1',
+    backgroundColor: 'rgba(255,255,255,0.4)',
   },
   stepDotActive: {
-    backgroundColor: ACCENT,
+    backgroundColor: "#FFFFFF",
     width: 12,
     height: 12,
     borderRadius: 6,
@@ -293,11 +300,11 @@ const styles = StyleSheet.create({
   stepLine: {
     width: 48,
     height: 2,
-    backgroundColor: '#CBD5E1',
+    backgroundColor: 'rgba(255,255,255,0.4)',
     marginHorizontal: 6,
   },
   stepLineActive: {
-    backgroundColor: ACCENT,
+    backgroundColor: "#FFFFFF",
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -406,6 +413,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.3,
   },
+  stepBackBtn: {
+    alignSelf: 'flex-start',
+    marginBottom: 16,
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+  },
+  stepBackText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4F6EF7',
+  },
   resendBtn: {
     marginTop: 18,
     alignItems: 'center',
@@ -427,12 +445,13 @@ const styles = StyleSheet.create({
     marginTop: 32,
   },
   footerText: {
-    color: '#64748B',
+    color: '#FFFFFF',
     fontSize: 14,
   },
   footerLink: {
-    color: ACCENT,
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
+    textDecorationLine: 'underline',
   },
 });

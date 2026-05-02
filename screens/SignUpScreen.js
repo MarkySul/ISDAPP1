@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../constants/colors';
+import api from '../services/api';
 
 const STEPS = ['Account', 'Farm Info', 'Pond Setup'];
 
@@ -164,7 +165,6 @@ export default function SignUpScreen({ navigation }) {
       }
     }
 
-    // Step 3 has no hard required fields — select options are optional
     return true;
   };
 
@@ -177,53 +177,60 @@ export default function SignUpScreen({ navigation }) {
 
   // ── Save & Sign Up ─────────────────────────────────────────────────────────
   const handleSignUp = async () => {
-  console.log('handleSignUp triggered');
-  try {
-    setLoading(true);
-    console.log('before AsyncStorage');
+    console.log('handleSignUp triggered');
+    try {
+      setLoading(true);
 
-      const userData = {
-        username: username.trim(),
-        password: password.trim(), // <--- CRITICAL FIX: Save the password!
-        email: email.trim(),
-        name: farmerName.trim(),
-        contactNumber: contactNumber.trim(),
-        farmName: farmName.trim(),
-        location: [farmLocation, barangay, municipality, province].filter(Boolean).join(', '),
-        barangay,
-        municipality,
-        province,
-        yearsOfFarming,
-        numberOfPonds,
-        pondArea,
-        stockingDensity,
-        tilapiaSpecies,
-        farmingSystem,
-        waterSource,
-        monitoringMethod,
-        joined: new Date().toISOString(),
-        devicesOnline: 0,
-        totalAlerts: 0,
-        cropMonitored: 'Tilapia',
-      };
-
-      await AsyncStorage.setItem('USER_DATA', JSON.stringify(userData));
-
-      setLoading(false);
-
-      Alert.alert(
-        'Account Created!',
-        'Welcome to IsdaApp. Your farm profile is ready.',
-        [
-          {
-            text: 'Sign In',
-            onPress: () => navigation.navigate('Login'),
-          },
-        ]
+      // ✅ Register via API (saves to MySQL)
+      const data = await api.register(
+        username.trim(),
+        email.trim(),
+        password.trim()
       );
+
+      console.log('Register response:', JSON.stringify(data));
+
+      if (data.userId) {
+        // ✅ Also save extra farm info locally
+        const userData = {
+          username: username.trim(),
+          email: email.trim(),
+          name: farmerName.trim(),
+          contactNumber: contactNumber.trim(),
+          farmName: farmName.trim(),
+          location: [farmLocation, barangay, municipality, province].filter(Boolean).join(', '),
+          barangay,
+          municipality,
+          province,
+          yearsOfFarming,
+          numberOfPonds,
+          pondArea,
+          stockingDensity,
+          tilapiaSpecies,
+          farmingSystem,
+          waterSource,
+          monitoringMethod,
+          joined: new Date().toISOString(),
+          devicesOnline: 0,
+          totalAlerts: 0,
+          cropMonitored: 'Tilapia',
+        };
+
+        await AsyncStorage.setItem('USER_DATA', JSON.stringify(userData));
+
+        setLoading(false);
+        Alert.alert(
+          'Account Created! 🎉',
+          'Welcome to IsdaApp. Your farm profile is ready.',
+          [{ text: 'Sign In', onPress: () => navigation.navigate('Login') }]
+        );
+      } else {
+        setLoading(false);
+        Alert.alert('Sign Up Failed', data.message || 'Something went wrong.');
+      }
     } catch (error) {
       setLoading(false);
-      Alert.alert('Error', 'Failed to save user data. Please try again.');
+      Alert.alert('Error', 'Could not connect to server. Check your connection.');
       console.error('SignUp error:', error);
     }
   };

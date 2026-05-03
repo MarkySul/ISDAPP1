@@ -1,0 +1,9 @@
+{
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "node isdapp-backend/server.js",
+    "restartPolicyType": "ON_FAILURE"
+  }
+}
